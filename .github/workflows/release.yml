@@ -8,17 +8,42 @@ on:
   workflow_dispatch:
 
 jobs:
+  # This job asserts a condition, but always "passes"
   pre-release:
     runs-on: ubuntu-latest
+    outputs:
+      checks_passed: ${{ steps.check_release.outputs.release }}    
     steps:
       - uses: actions/checkout@v3
-      - name: Run a one-line script
-        run: exit 1
-  # This workflow contains a single job called "build"
-  release:
+      - id: check_release
+        run: echo "release=true" >> $GITHUB_OUTPUT
+        
+  # This job only runs if the condition passes
+  release-will-run:
     needs: pre-release
+    if: needs.pre-release.outputs.checks_passed == "true"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Run a one-line script
         run: echo "released"        
+        
+  # This job asserts a condition, but always "passes"
+  pre-release-fail:
+    runs-on: ubuntu-latest
+    outputs:
+      checks_passed: ${{ steps.check_release.outputs.release }}    
+    steps:
+      - uses: actions/checkout@v3
+      - id: check_release
+        run: echo "release=false" >> $GITHUB_OUTPUT
+        
+  # This job only runs if the condition passes
+  release-not-run-fail:
+    needs: pre-release
+    if: needs.pre-release.outputs.checks_passed == "true"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run a one-line script
+        run: echo "released"                
